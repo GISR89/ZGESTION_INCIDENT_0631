@@ -1,0 +1,86 @@
+@Metadata.layer: #CORE
+@UI: { headerInfo: { typeName :      'History',
+                     typeNamePlural: 'Histories',
+                     title:         { type: #STANDARD,
+                                      label: 'History',
+                                      value: 'HisId' } },
+        presentationVariant: [ { sortOrder :     [{ by: 'HisId',
+                                                    direction: #ASC }] ,
+                                 visualizations: [{ type: #AS_LINEITEM  }] }] }
+@UI.createHidden: true                                 
+                                 
+annotate entity ZC_DT_INCT_H_0631
+    with 
+{
+ @UI.facet: [ { id : 'History',
+                purpose: #STANDARD,
+                type: #LINEITEM_REFERENCE,
+                label: 'History',
+                position: 10} ]
+                
+  @UI: { lineItem:       [ { position: 10, 
+                             importance: #HIGH } ],
+         identification: [ { position: 10 } ] }
+  @UI.hidden: true
+    HisUuid;
+   
+  @UI: { lineItem:       [ { position: 20, 
+                             importance: #HIGH } ],
+         identification: [ { position: 20 } ] }
+  @UI.hidden: true
+    IncUuid;
+   
+  @UI: { lineItem:       [ { position: 30, 
+                             importance: #MEDIUM } ],
+         identification: [ { position: 30 } ] }
+    HisId;
+   
+  @UI: { lineItem:       [ { position: 40, 
+                             importance: #LOW } ],
+         identification: [ { position: 40 } ] }
+    PreviousStatus;
+    
+  @UI: { lineItem:       [ { position: 50, 
+                             importance: #LOW } ],
+         identification: [ { position: 50 } ] }
+    NewStatus;
+    
+  @UI: { lineItem:       [ { position: 60, 
+                             importance: #LOW } ],
+         identification: [ { position: 60 } ] }
+    Text;
+    
+  @UI: { lineItem:       [ { position: 70, 
+                             importance: #LOW } ],
+         identification: [ { position: 70 } ] }
+  @UI.hidden: true
+    LocalCreatedBy;
+    
+  @UI: { lineItem:       [ { position: 80, 
+                             importance: #LOW } ],
+         identification: [ { position: 80 } ] }
+  @UI.hidden: true
+    LocalCreatedAt;
+    
+  @UI: { lineItem:       [ { position: 90, 
+                             importance: #LOW } ],
+         identification: [ { position: 90 } ] }
+  @UI.hidden: true
+    LocalLastChangedBy;
+    
+  @UI: { lineItem:       [ { position: 100, 
+                             importance: #LOW } ],
+         identification: [ { position: 100 } ] }
+  @UI.hidden: true
+    LocalLastChangedAt;
+   
+  @UI: { lineItem:       [ { position: 110, 
+                             importance: #LOW } ],
+         identification: [ { position: 110 } ] }
+  @UI.hidden: true
+    LastChangedAt;
+    
+   @UI.hidden: true
+  _Incidents; 
+    
+}
