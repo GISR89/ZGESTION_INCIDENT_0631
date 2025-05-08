@@ -10,6 +10,7 @@
 
 annotate entity ZC_DT_INCT_0631 with
 {
+  @EndUserText.label: 'IncUuid'
   @UI.facet: [ { id : 'Incidents',
                  purpose: #STANDARD,
                  type: #IDENTIFICATION_REFERENCE,
@@ -21,14 +22,18 @@ annotate entity ZC_DT_INCT_0631 with
                  label: 'History',
                  position: 20}]
 
-  @UI: {lineItem: [{ position : 10,
-                     importance: #HIGH,
-                     label: 'IncUUID' },
-                   { type: #FOR_ACTION,
-                     dataAction: 'CompletedIncident',
-                     label: 'Completed Incident',
-                     position: 10 } ],
-        identification: [{ position: 10  }],
+  @UI: { lineItem:   [{ position : 10,
+                        importance: #HIGH,
+                        label: 'IncUUID' },
+                      { type: #FOR_ACTION,
+                        dataAction: 'ChangeStatus',
+                        label: 'Change Status',
+                        position: 10 } ],
+     identification: [{ position: 10  },
+                      { type: #FOR_ACTION,
+                        dataAction: 'ChangeStatus',
+                        label: 'Change Status',
+                        position: 10 }],
         selectionField: [{ position: 10 }] }
   @UI.hidden: true
   IncUuid;
@@ -52,12 +57,16 @@ annotate entity ZC_DT_INCT_0631 with
         selectionField: [{ position: 40 }] }
   Description;
 
+  @Consumption.valueHelpDefinition: [{ entity : { name    : 'ZDD_STATUS_VH_0631',                 
+                                                  element : 'StatusCode'} }]
   @UI: { lineItem: [{ position : 50,
                    importance : #LOW  }],
          identification: [{ position: 50  }],
          selectionField: [{ position: 50 }] }
   Status;
 
+  @Consumption.valueHelpDefinition: [{ entity : { name    : 'ZDD_PRIORITY_VH_631',                 
+                                                  element : 'PriorityCode'} }]
   @UI: { lineItem: [{ position : 60,
                    importance : #LOW  }],
          identification: [{ position: 60  }],
