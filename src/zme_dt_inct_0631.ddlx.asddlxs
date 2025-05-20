@@ -46,9 +46,9 @@ annotate entity ZC_DT_INCT_0631 with
 
   @UI: { lineItem: [{ position : 30,
                    importance : #LOW  }],
-         identification: [{ position: 30  }],
-         selectionField: [{ position: 30 }] }
-  @UI.hidden: true
+         identification: [{ position: 30  }]}
+         //selectionField: [{ position: 30 }] }
+  //@UI.hidden: true
   Title;
 
   @UI: { lineItem: [{ position : 40,

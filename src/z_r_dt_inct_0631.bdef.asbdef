@@ -7,7 +7,7 @@ persistent table zdt_inct_0631
 draft table zdt_d_inct_0631
 etag master LocalLastChangedAt
 lock master total etag LastChangedAt
-authorization master ( instance )
+authorization master ( global, instance )
 
 {
   create;
@@ -31,10 +31,19 @@ authorization master ( instance )
                       Description,
                       Priority;
 
-  action ( authorization : update ) ChangeStatus
+  action ( features : instance, authorization : update ) ChangeStatus
            parameter ZDD_CHANGE_STATUS_0631 result [1] $self;
 
   side effects { action ChangeStatus affects $self; }
+
+  validation validateTitle on save { create; field Title; }
+  validation validateDescription on save { create; field Description; }
+  validation validatePriority on save { create; field Priority; }
+  validation validateStatus on save { create; field Status; }
+  validation validateDate on save { create; field CreationDate; }
+
+  determination setStatusToOpen on save {create; }
+  determination SetIncidentNumber on modify {create; }
 
   draft action Activate optimized;
   draft action Discard;
@@ -61,7 +70,8 @@ authorization master ( instance )
 
 }
 
-define behavior for ZDDT_INCT_H_0631 //alias <alias_name>
+define behavior for ZDDT_INCT_H_0631 alias History
+implementation in class zbp_DDT_INCT_H_0631 unique
 persistent table zdt_inct_h_0631
 draft table zdt_d_inct_h_631
 lock dependent by _Incidents
