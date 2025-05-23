@@ -15,6 +15,7 @@ define root view entity Z_r_DT_INCT_0631
       priority              as Priority,
       creation_date         as CreationDate,
       changed_date          as ChangedDate,
+      responsible           as Responsible,
       @Semantics.user.createdBy: true
       local_created_by      as LocalCreatedBy,
       @Semantics.systemDateTime.createdAt: true

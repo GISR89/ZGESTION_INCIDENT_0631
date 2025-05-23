@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+    <MASTERLANG>E</MASTERLANG>
+    <STEXT>messages for zbp_r_dt_inct_0631</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>No se puede modificar un incidente cerrado, completado o cancelado</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>No se puede cerrar un incidente en estado pendiente</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>Debe asignarse un responsable al cambiar a &apos;In Progress&apos;</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>No tienes permiso para cambiar el estado.</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>No estas autorizado para esta actividad</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>La fecha no puede ser anterior a CREATION_DATE</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>No se permite fecha futura</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>E</SPRSL>
+     <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
+     <MSGNR>008</MSGNR>
+     <TEXT>Debe asignarse un responsable</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>

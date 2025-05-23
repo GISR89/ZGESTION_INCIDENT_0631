@@ -1,8 +1,8 @@
-projection;
+projection implementation in class zbp_DT_INCT_0631 unique;
 strict ( 2 );
 use draft;
 
-define behavior for ZC_DT_INCT_0631 //alias <alias_name>
+define behavior for ZC_DT_INCT_0631 alias Incidents
 {
   use create;
   use update;
@@ -19,10 +19,10 @@ define behavior for ZC_DT_INCT_0631 //alias <alias_name>
   use association _History { create; with draft; }
 }
 
-define behavior for ZC_DT_INCT_H_0631 //alias <alias_name>
+define behavior for ZC_DT_INCT_H_0631 alias History
 {
-  use update;
-  use delete;
+ // use update;
+//  use delete;
 
   use association _Incidents { with draft; }
 }

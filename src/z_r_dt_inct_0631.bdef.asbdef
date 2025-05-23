@@ -21,6 +21,7 @@ authorization master ( global, instance )
   field ( readonly ) IncidentId,
                      Status,
                      ChangedDate,
+                     Responsible,
                      LocalCreatedBy,
                      LocalCreatedAt,
                      LocalLastChangedBy,
@@ -36,11 +37,7 @@ authorization master ( global, instance )
 
   side effects { action ChangeStatus affects $self; }
 
-  validation validateTitle on save { create; field Title; }
-  validation validateDescription on save { create; field Description; }
-  validation validatePriority on save { create; field Priority; }
-  validation validateStatus on save { create; field Status; }
-  validation validateDate on save { create; field CreationDate; }
+  internal action setHistory;
 
   determination setStatusToOpen on save {create; }
   determination SetIncidentNumber on modify {create; }
@@ -61,6 +58,7 @@ authorization master ( global, instance )
       Priority           = priority;
       CreationDate       = creation_date;
       ChangedDate        = changed_date;
+      Responsible        = responsible;
       LocalCreatedBy     = local_created_by;
       LocalCreatedAt     = local_created_at;
       LocalLastChangedBy = local_last_changed_by;
@@ -87,7 +85,7 @@ etag master LocalLastChangedAt
 
   field ( numbering : managed, readonly ) HisUuid;
 
-    field ( readonly ) IncUUID,
+  field ( readonly ) IncUUID,
                        LocalCreatedBy,
                        LocalCreatedAt,
                        LocalLastChangedBy,
