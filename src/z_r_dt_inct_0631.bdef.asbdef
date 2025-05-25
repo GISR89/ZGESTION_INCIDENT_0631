@@ -20,6 +20,7 @@ authorization master ( global, instance )
 
   field ( readonly ) IncidentId,
                      Status,
+                     CreationDate,
                      ChangedDate,
                      LocalCreatedBy,
                      LocalCreatedAt,
@@ -34,7 +35,7 @@ authorization master ( global, instance )
   action ( features : instance, authorization : update ) ChangeStatus
            parameter ZDD_CHANGE_STATUS_0631 result [1] $self;
 
-  side effects { action ChangeStatus affects $self; }
+  side effects { action ChangeStatus affects entity _History; }
 
   internal action setHistory;
 

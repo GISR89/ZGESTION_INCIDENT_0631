@@ -42,38 +42,38 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
   METHOD get_instance_features.
 
-*    DATA lv_history_index TYPE zde_his_id_0631.
-*
-*    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-*     ENTITY Incidents
-*       FIELDS ( Status )
-*       WITH CORRESPONDING #( keys )
-*     RESULT DATA(incidents)
-*     FAILED failed.
-*
-*** Disable changeStatus for Incidents Creation
-*    DATA(lv_create_action) = lines( incidents ).
-*    IF lv_create_action EQ 1.
-*      lv_history_index = get_history_index( IMPORTING ev_incuuid = incidents[ 1 ]-IncUUID ).
-*    ELSE.
-*      lv_history_index = 1.
-*    ENDIF.
-*
-*    result = VALUE #( FOR incident IN incidents
-*                          ( %tky                   = incident-%tky
-*                            %action-ChangeStatus   = COND #( WHEN incident-Status = lc_status-completed OR
-*                                                                  incident-Status = lc_status-closed    OR
-*                                                                  incident-Status = lc_status-canceled  OR
-*                                                                  lv_history_index = 0
-*                                                             THEN if_abap_behv=>fc-o-disabled
-*                                                             ELSE if_abap_behv=>fc-o-enabled )
-*
-*                            %assoc-_History       = COND #( WHEN incident-Status = lc_status-completed OR
-*                                                                 incident-Status = lc_status-closed    OR
-*                                                                 incident-Status = lc_status-canceled  OR
-*                                                                 lv_history_index = 0
-*                                                            THEN if_abap_behv=>fc-o-disabled
-*                                                            ELSE if_abap_behv=>fc-o-enabled ) ) ).
+    DATA lv_history_index TYPE zde_his_id_0631.
+
+    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
+     ENTITY Incidents
+       FIELDS ( Status )
+       WITH CORRESPONDING #( keys )
+     RESULT DATA(incidents)
+     FAILED failed.
+
+** Disable changeStatus for Incidents Creation
+    DATA(lv_create_action) = lines( incidents ).
+    IF lv_create_action EQ 1.
+      lv_history_index = get_history_index( IMPORTING ev_incuuid = incidents[ 1 ]-IncUUID ).
+    ELSE.
+      lv_history_index = 1.
+    ENDIF.
+
+    result = VALUE #( FOR incident IN incidents
+                          ( %tky                   = incident-%tky
+                            %action-ChangeStatus   = COND #( WHEN incident-Status = lc_status-completed OR
+                                                                  incident-Status = lc_status-closed    OR
+                                                                  incident-Status = lc_status-canceled  OR
+                                                                  lv_history_index = 0
+                                                             THEN if_abap_behv=>fc-o-disabled
+                                                             ELSE if_abap_behv=>fc-o-enabled )
+
+                            %assoc-_History       = COND #( WHEN incident-Status = lc_status-completed OR
+                                                                 incident-Status = lc_status-closed    OR
+                                                                 incident-Status = lc_status-canceled  OR
+                                                                 lv_history_index = 0
+                                                            THEN if_abap_behv=>fc-o-disabled
+                                                            ELSE if_abap_behv=>fc-o-enabled ) ) ).
 *
 *    " boton de Change Status para ADMIN o responsable
 *    "DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
@@ -270,8 +270,9 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
       ENDIF.
 
-      IF <lf_incidents>-Status EQ lc_status-pending AND lv_new_status = lc_status-closed OR
-         <lf_incidents>-Status EQ lc_status-pending AND lv_new_status = lc_status-completed.
+      IF ( <lf_incidents>-Status EQ lc_status-pending AND lv_new_status = lc_status-closed ) OR
+         ( <lf_incidents>-Status EQ lc_status-pending AND lv_new_status = lc_status-completed ) OR
+         ( <lf_incidents>-Status EQ lc_status-pending AND lv_new_status = lc_status-canceled ).
 
         APPEND VALUE #( %tky = <lf_incidents>-%tky ) TO failed-incidents.
 
@@ -313,11 +314,13 @@ CLASS lhc_Incidents IMPLEMENTATION.
         ls_history-his_id = lv_max_his_id + 1.
       ENDIF.
 
+      ls_history-previous_status = <lf_incidents>-Status.
       ls_history-new_status = lv_new_status.
       ls_history-text = lv_text.
 
       TRY.
-          ls_history-inc_uuid = cl_system_uuid=>create_uuid_x16_static( ).
+          ls_history-his_uuid = cl_system_uuid=>create_uuid_x16_static( ).
+          ls_history-inc_uuid = <lf_incidents>-IncUuid.
         CATCH cx_uuid_error INTO DATA(lo_error).
           DATA(lv_exception) = lo_error->get_text(  ).
       ENDTRY.
@@ -367,7 +370,8 @@ CLASS lhc_Incidents IMPLEMENTATION.
     ENTITY Incidents
     ALL FIELDS WITH CORRESPONDING #( keys )
     RESULT incidents
-    FAILED failed.
+    FAILED failed
+    REPORTED reported.
 
 
     result = VALUE #( FOR incident IN incidents ( %tky = incident-%tky
@@ -377,17 +381,119 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
   METHOD sethistory.
 
+*    DATA : lt_update_incident TYPE TABLE FOR UPDATE Z_r_DT_INCT_0631,
+*           lt_create_history  TYPE TABLE FOR CREATE Z_r_DT_INCT_0631\_History,
+*           ls_history         TYPE zdt_inct_h_0631.
+*
+*    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
+*    ENTITY Incidents
+*    ALL FIELDS
+*    WITH CORRESPONDING #( keys )
+*    RESULT DATA(incidents).
+*
+*    LOOP AT incidents ASSIGNING FIELD-SYMBOL(<lf_incidents>).
+*
+*      DATA(lv_max_his_id) = get_history_index( IMPORTING ev_incuuid = <lf_incidents>-IncUUID ).
+*
+*      IF lv_max_his_id IS INITIAL.
+*        ls_history-his_id = 1.
+*      ELSE.
+*        ls_history-his_id = lv_max_his_id + 1.
+*      ENDIF.
+*
+*      TRY.
+*          ls_history-inc_uuid = cl_system_uuid=>create_uuid_x16_static( ).
+*        CATCH cx_uuid_error INTO DATA(lo_error).
+*          DATA(lv_exception) = lo_error->get_text(  ).
+*      ENDTRY.
+*
+*      IF ls_history-his_id IS NOT INITIAL.
+*
+*        APPEND VALUE #( %tky    = <lf_incidents>-%tky
+*                        %target = VALUE #( (  HisUUID         = ls_history-his_uuid
+*                                              IncUUID         = ls_history-inc_uuid
+*                                              hisid           = ls_history-his_id
+*                                              previousstatus  = ls_history-previous_status
+*                                              newstatus       = ls_history-new_status
+*                                              text            = 'First Incident' ) ) ) TO lt_create_history .
+*      ENDIF.
+*    ENDLOOP.
+*
+*    UNASSIGN <lf_incidents>.
+*    FREE incidents.
+*
+*    MODIFY ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
+*    ENTITY Incidents
+*    CREATE BY \_History FIELDS ( HisUUID
+*                                 IncUUID
+*                                 HisID
+*                                 PreviousStatus
+*                                 NewStatus
+*                                 Text )
+*       AUTO FILL CID
+*       WITH lt_create_history
+*    MAPPED mapped
+*    FAILED failed
+*    REPORTED reported.
+
+  ENDMETHOD.
+
+  METHOD SetIncidentNumber.
+
+    "lectura de la entidad
+    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
+    ENTITY Incidents
+    FIELDS ( status
+             CreationDate )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_incidents).
+
+    DELETE lt_incidents WHERE CreationDate IS NOT INITIAL.
+    CHECK lt_incidents IS NOT INITIAL.
+
+    "  valor para incident_id
+    SELECT FROM zdt_inct_0631
+       FIELDS MAX( incident_id ) AS max_inct_id
+       WHERE incident_id IS NOT NULL
+    INTO @DATA(lv_max_inc_id).
+
+    IF lv_max_inc_id IS INITIAL.
+      lv_max_inc_id = 1.
+    ELSE.
+      lv_max_inc_id += 1.
+    ENDIF.
+
+    "modificacion de status, incidentId, creationDate
+    MODIFY ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
+    ENTITY Incidents
+    UPDATE
+    FIELDS ( IncidentId
+             Status
+             CreationDate )
+    WITH VALUE #( FOR ls_incidents IN lt_incidents ( %tky         = ls_incidents-%tky
+                                                     IncidentId   = lv_max_inc_id
+                                                     Status       = lc_status-open
+                                                     CreationDate = cl_abap_context_info=>get_system_date( ) ) ).
+
+
+  ENDMETHOD.
+
+  METHOD setStatusToOpen.
+
     DATA : lt_update_incident TYPE TABLE FOR UPDATE Z_r_DT_INCT_0631,
            lt_create_history  TYPE TABLE FOR CREATE Z_r_DT_INCT_0631\_History,
            ls_history         TYPE zdt_inct_h_0631.
 
+    "lectura de la entidad
     READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-    ENTITY Incidents
+    ENTITY incidents
     ALL FIELDS
     WITH CORRESPONDING #( keys )
-    RESULT DATA(incidents).
+    RESULT DATA(lt_incidents).
 
-    LOOP AT incidents ASSIGNING FIELD-SYMBOL(<lf_incidents>).
+    CHECK lt_incidents IS NOT INITIAL.
+
+    LOOP AT lt_incidents ASSIGNING FIELD-SYMBOL(<lf_incidents>).
 
       DATA(lv_max_his_id) = get_history_index( IMPORTING ev_incuuid = <lf_incidents>-IncUUID ).
 
@@ -398,7 +504,8 @@ CLASS lhc_Incidents IMPLEMENTATION.
       ENDIF.
 
       TRY.
-          ls_history-inc_uuid = cl_system_uuid=>create_uuid_x16_static( ).
+          ls_history-his_uuid = cl_system_uuid=>create_uuid_x16_static( ).
+          ls_history-inc_uuid = <lf_incidents>-IncUuid.
         CATCH cx_uuid_error INTO DATA(lo_error).
           DATA(lv_exception) = lo_error->get_text(  ).
       ENDTRY.
@@ -410,16 +517,16 @@ CLASS lhc_Incidents IMPLEMENTATION.
                                               IncUUID         = ls_history-inc_uuid
                                               hisid           = ls_history-his_id
                                               previousstatus  = ls_history-previous_status
-                                              newstatus       = ls_history-new_status
+                                              newstatus       = lc_status-open
                                               text            = 'First Incident' ) ) ) TO lt_create_history .
       ENDIF.
     ENDLOOP.
 
     UNASSIGN <lf_incidents>.
-    FREE incidents.
+    FREE lt_incidents.
 
     MODIFY ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-    ENTITY Incidents
+    ENTITY incidents
     CREATE BY \_History FIELDS ( HisUUID
                                  IncUUID
                                  HisID
@@ -428,55 +535,9 @@ CLASS lhc_Incidents IMPLEMENTATION.
                                  Text )
        AUTO FILL CID
        WITH lt_create_history
-    MAPPED mapped
-    FAILED failed
-    REPORTED reported.
-
-  ENDMETHOD.
-
-  METHOD SetIncidentNumber.
-
-*    "lectura de la entidad
-*    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-*    ENTITY Incidents
-*    FIELDS ( status
-*             CreationDate )
-*    WITH CORRESPONDING #( keys )
-*    RESULT DATA(lt_incidents).
-*
-*    DELETE lt_incidents WHERE CreationDate IS NOT INITIAL.
-*    CHECK lt_incidents IS NOT INITIAL.
-*
-*    "  valor para incident_id
-*    SELECT FROM zdt_inct_0631
-*       FIELDS MAX( incident_id ) AS max_inct_id
-*       WHERE incident_id IS NOT NULL
-*    INTO @DATA(lv_max_inc_id).
-*
-*    IF lv_max_inc_id IS INITIAL.
-*      lv_max_inc_id = 1.
-*    ELSE.
-*      lv_max_inc_id += 1.
-*    ENDIF.
-*
-*    "modificacion de status, incidentId, creationDate
-*    MODIFY ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-*    ENTITY Incidents
-*    UPDATE
-*    FIELDS ( IncidentId
-*             Status
-*             CreationDate )
-*    WITH VALUE #( FOR ls_incidents IN lt_incidents ( %tky         = ls_incidents-%tky
-*                                                     IncidentId   = lv_max_inc_id
-*                                                     Status       = lc_status-open
-*                                                     CreationDate = cl_abap_context_info=>get_system_date( ) ) ).
-
-
-  ENDMETHOD.
-
-  METHOD setStatusToOpen.
-
-
+    MAPPED DATA(lt_mapped)
+    FAILED DATA(lt_failed)
+    REPORTED DATA(lt_reported).
 
   ENDMETHOD.
 
