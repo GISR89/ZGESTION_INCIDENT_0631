@@ -15,12 +15,14 @@ annotate entity ZC_DT_INCT_0631 with
                  purpose: #STANDARD,
                  type: #IDENTIFICATION_REFERENCE,
                  label: 'Incidents',
-                 position: 20} ,
+                 position: 10} ,
                { id : 'History',
                  purpose: #STANDARD,
                  type: #LINEITEM_REFERENCE,
                  label: 'History',
-                 position: 20}]
+                 position: 20,
+                 targetElement: '_History' }]
+                
 
   @UI: { lineItem:   [{ position : 10,
                         importance: #HIGH,

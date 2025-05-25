@@ -4,7 +4,7 @@
 define root view entity Z_r_DT_INCT_0631
   as select from zdt_inct_0631
   
-  composition [0..*] of ZDDT_INCT_H_0631 as _History
+  composition [0..*] of ZDDT_INCT_H_0631 as _History 
   
 {
   key inc_uuid              as IncUuid,
@@ -15,7 +15,6 @@ define root view entity Z_r_DT_INCT_0631
       priority              as Priority,
       creation_date         as CreationDate,
       changed_date          as ChangedDate,
-      responsible           as Responsible,
       @Semantics.user.createdBy: true
       local_created_by      as LocalCreatedBy,
       @Semantics.systemDateTime.createdAt: true

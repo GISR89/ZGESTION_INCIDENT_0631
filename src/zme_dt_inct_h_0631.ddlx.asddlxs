@@ -1,6 +1,6 @@
 @Metadata.layer: #CORE
 @UI: { headerInfo: { typeName :      'History',
-                     typeNamePlural: 'History',
+                     typeNamePlural: 'Histories',
                      title:         { type: #STANDARD,
                                       label: 'History',
                                       value: 'HisId' } },

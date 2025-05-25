@@ -14,7 +14,6 @@ define root view entity ZC_DT_INCT_0631
       Priority,
       CreationDate,
       ChangedDate,
-      Responsible,
       LocalCreatedBy,
       LocalCreatedAt,
       LocalLastChangedBy,
