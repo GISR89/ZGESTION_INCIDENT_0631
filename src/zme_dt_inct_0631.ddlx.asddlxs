@@ -86,7 +86,7 @@ annotate entity ZC_DT_INCT_0631 with
          identification: [{ position: 80  }],
          selectionField: [{ position: 80 }] }
   ChangedDate;
-
+  
   @UI: { lineItem: [{ position : 90,
                    importance : #LOW  }],
          identification: [{ position: 90  }],

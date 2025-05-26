@@ -99,6 +99,7 @@ mapping for zdt_inct_h_0631
       PreviousStatus     = previous_status;
       NewStatus          = new_status;
       Text               = text;
+      Responsable        = responsable;
       LocalCreatedBy     = local_created_by;
       LocalCreatedAt     = local_created_at;
       LocalLastChangedBy = local_last_changed_by;

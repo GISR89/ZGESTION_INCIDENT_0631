@@ -11,6 +11,7 @@ as projection on ZDDT_INCT_H_0631
     PreviousStatus,
     NewStatus,
     Text,
+    Responsable,
     LocalCreatedBy,
     LocalCreatedAt,
     LocalLastChangedBy,
