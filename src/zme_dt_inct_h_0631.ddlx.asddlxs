@@ -49,15 +49,7 @@ annotate entity ZC_DT_INCT_H_0631
                              importance: #LOW } ],
          identification: [ { position: 60 } ] }
     Text;
-       
-     @UI: { lineItem: [{ label : 'Responsable',
-                         position  : 61,
-                         importance : #LOW  }],
-         identification: [{ position: 61  }],
-         selectionField: [{ position: 61 }] }
-         
-  Responsable;
-    
+          
   @UI: { lineItem:       [ { position: 70, 
                              importance: #LOW } ],
          identification: [ { position: 70 } ] }

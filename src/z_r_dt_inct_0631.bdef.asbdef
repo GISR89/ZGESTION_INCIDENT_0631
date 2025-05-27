@@ -22,6 +22,7 @@ authorization master ( global, instance )
                      Status,
                      CreationDate,
                      ChangedDate,
+                     Responsable,
                      LocalCreatedBy,
                      LocalCreatedAt,
                      LocalLastChangedBy,
@@ -37,7 +38,7 @@ authorization master ( global, instance )
 
   side effects { action ChangeStatus affects entity _History; }
 
-  internal action setHistory;
+  //internal action setHistory;
 
   determination setStatusToOpen on save {create; }
   determination SetIncidentNumber on modify {create; }
@@ -58,6 +59,7 @@ authorization master ( global, instance )
       Priority           = priority;
       CreationDate       = creation_date;
       ChangedDate        = changed_date;
+      Responsable        = responsable;
       LocalCreatedBy     = local_created_by;
       LocalCreatedAt     = local_created_at;
       LocalLastChangedBy = local_last_changed_by;
@@ -99,7 +101,6 @@ mapping for zdt_inct_h_0631
       PreviousStatus     = previous_status;
       NewStatus          = new_status;
       Text               = text;
-      Responsable        = responsable;
       LocalCreatedBy     = local_created_by;
       LocalCreatedAt     = local_created_at;
       LocalLastChangedBy = local_last_changed_by;

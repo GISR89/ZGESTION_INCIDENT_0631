@@ -11,6 +11,8 @@ CLASS lhc_Incidents DEFINITION INHERITING FROM cl_abap_behavior_handler.
                  canceled    TYPE zde_status_0631 VALUE 'CN',
                END OF lc_status.
 
+    CLASS-DATA gv_is_admin TYPE abap_boolean.
+
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR Incidents RESULT result.
 
@@ -22,9 +24,6 @@ CLASS lhc_Incidents DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS ChangeStatus FOR MODIFY
       IMPORTING keys FOR ACTION Incidents~ChangeStatus RESULT result.
-
-    METHODS setHistory FOR MODIFY
-      IMPORTING keys FOR ACTION Incidents~setHistory.
 
     METHODS SetIncidentNumber FOR DETERMINE ON MODIFY
       IMPORTING keys FOR Incidents~SetIncidentNumber.
@@ -46,12 +45,12 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
     READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
      ENTITY Incidents
-       FIELDS ( Status )
-       WITH CORRESPONDING #( keys )
+     ALL FIELDS
+     WITH CORRESPONDING #( keys )
      RESULT DATA(incidents)
      FAILED failed.
 
-    "Para un incidente con estatus Canceled (CN), Completed (CO) o Closed (CL), ya no es posible cambiar el estatus.
+    "Para un incidente con estatus Canceled (CN), Completed (CO) o Closed (CL), ya no es posible cambiar el estatus. Deshabilita boton vista ppal
     DATA(lv_create_action) = lines( incidents ).
     IF lv_create_action EQ 1.
       lv_history_index = get_history_index( IMPORTING ev_incuuid = incidents[ 1 ]-IncUUID ).
@@ -75,176 +74,92 @@ CLASS lhc_Incidents IMPLEMENTATION.
                                                             THEN if_abap_behv=>fc-o-disabled
                                                             ELSE if_abap_behv=>fc-o-enabled ) ) ).
 
-    "Solo el usuario asignado o un administrador pueden cambiar el estado de un incidente.
 
-*    DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
-*    DATA(lv_administrador) = 'CB9980007185'.
-*
-*    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-*     ENTITY History
-*       ALL FIELDS
-*       WITH CORRESPONDING #( keys )
-*     RESULT DATA(lt_responsable)
-*     FAILED failed.
-*
-*    LOOP AT lt_responsable INTO DATA(ls_responsable).
-*      IF  requested_features-%action-ChangeStatus = if_abap_behv=>mk-on AND
-*                                                    ls_responsable-Responsable EQ lv_technical_name OR
-*                                                    ls_responsable-Responsable EQ lv_administrador.
-*        result = VALUE #( FOR incident IN incidents
-*                        ( %tky                   = incident-%tky
-*                          %action-ChangeStatus   = if_abap_behv=>fc-o-disabled ) ).
-*      ELSE.
-*        result = VALUE #( FOR incident IN incidents
-*                        ( %tky                   = incident-%tky
-*                          %action-ChangeStatus   = if_abap_behv=>fc-o-enabled ) ).
-*
-*        EXIT.
-*
-*      ENDIF.
-*    ENDLOOP.
 
   ENDMETHOD.
 
   METHOD get_instance_authorizations.
 
-*/
-    DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
-    DATA(lv_administrador) = 'CB9980007185'.
-    DATA(lv_INCuuid) = keys[ 1 ]-incuuid.
+    "DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
+    DATA(lv_technical_name) = 'CB9980007100'.
 
     "update  Solo el usuario asignado o un administrador pueden cambiar el estado de un incidente.
 
-    SELECT FROM zdt_inct_h_0631
-         FIELDS new_status,
-                responsable,
-                his_uuid,
-                inc_uuid,
-                his_id
-         WHERE responsable IS NOT NULL
-           AND inc_uuid = @lv_INCuuid
-       INTO TABLE @DATA(lt_resp_validate).
+    DATA: lv_update_requested TYPE abap_bool,
+          lv_update_granted   TYPE abap_bool.
 
-    SORT lt_resp_validate BY his_id DESCENDING.
+    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
+    ENTITY Incidents
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_incident)
+    FAILED failed.
 
-    LOOP AT lt_resp_validate ASSIGNING FIELD-SYMBOL(<lf_responsable>).
+    " Identify current operation to be authorized
+    lv_update_requested = COND #( WHEN requested_authorizations-%update = if_abap_behv=>mk-on OR
+                                       requested_authorizations-%action-Edit = if_abap_behv=>mk-on
+                                  THEN abap_true
+                                  ELSE abap_false ).
+    CHECK lv_update_requested EQ abap_true.
 
-      IF <lf_responsable>-responsable EQ lv_technical_name OR
-         <lf_responsable>-responsable EQ lv_administrador.
+    " Iterate through the root entity records
 
-        IF requested_authorizations-%update EQ if_abap_behv=>mk-on OR
-           requested_authorizations-%action-Edit EQ if_abap_behv=>mk-on.
+    LOOP AT lt_incident ASSIGNING FIELD-SYMBOL(<lf_incident>).
 
-          IF <lf_responsable>-responsable EQ lv_technical_name OR lv_technical_name EQ lv_administrador.
-            APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<fs_result>).
-            <fs_result>-%update = if_abap_behv=>auth-allowed.
-            <fs_result>-%action-Edit = if_abap_behv=>auth-allowed.
-          ELSE.
-            APPEND INITIAL LINE TO result ASSIGNING <fs_result>.
-            <fs_result>-%update = if_abap_behv=>auth-unauthorized.
-            <fs_result>-%action-Edit = if_abap_behv=>auth-unauthorized.
-          ENDIF.
-        ENDIF.
+      IF <lf_incident>-responsable IS INITIAL OR
+         <lf_incident>-responsable EQ lv_technical_name OR
+         gv_is_admin = abap_true.
+
+        lv_update_granted = abap_true.
+      ELSE.
+        lv_update_granted = abap_false.
       ENDIF.
 
+      "Set authorizations to root entity records
+      APPEND VALUE #( LET upd_auth = COND #(
+                                             WHEN lv_update_granted EQ abap_true
+                                              THEN if_abap_behv=>auth-allowed
+                                              ELSE if_abap_behv=>auth-unauthorized  )
+                                              IN
+                                              %tky = <lf_incident>-%tky
+                                              %update = upd_auth
+                                              %action-Edit = upd_auth ) TO result.
       EXIT.
-
     ENDLOOP.
-
-
-*/
-
-*    DATA: lv_update_requested TYPE abap_bool,
-*          lv_update_granted   TYPE abap_bool,
-*          lv_delete_requested TYPE abap_bool,
-*          lv_delete_granted   TYPE abap_bool.
-
-*    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-*         ENTITY History
-*         ALL FIELDS WITH CORRESPONDING #( keys )
-*         RESULT DATA(lt_incidents)
-*         FAILED failed.
-*
-*    lv_update_requested = COND #(
-*                              WHEN requested_authorizations-%update = if_abap_behv=>mk-on OR
-*                                   requested_authorizations-%action-Edit = if_abap_behv=>mk-on
-*                              THEN abap_true
-*                              ELSE abap_false ).
-*    lv_delete_requested = COND #(
-*                               WHEN requested_authorizations-%delete = if_abap_behv=>mk-on
-*                               THEN abap_true
-*                               ELSE abap_false ).
-*
-*    CHECK lv_update_requested EQ abap_true.
-*
-*    DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
-*
-*    LOOP AT lt_incidents INTO DATA(ls_responsable).
-
-*      IF ls_responsable-Responsable EQ lv_technical_name OR
-*                                       lv_technical_name <> 'ADMINISTRADOR'.
-*        lv_update_granted = abap_true.
-*
-*      ELSE.
-*        lv_update_granted = abap_false.
-*
-*        APPEND VALUE #( %tky = ls_responsable-%tky
-*                %msg = NEW zcl_incident_messages_0631( textid = zcl_incident_messages_0631=>not_authorized
-*                                                    severity = if_abap_behv_message=>severity-error )
-*                )  TO reported-incidents.
-*
-*      ENDIF.
-*
-*      APPEND VALUE #( LET upd_auth = COND #( WHEN lv_update_granted EQ abap_true
-*                                             THEN if_abap_behv=>auth-allowed
-*                                             ELSE if_abap_behv=>auth-unauthorized )
-*                          del_auth = COND #( WHEN lv_delete_granted EQ abap_true
-*                                             THEN if_abap_behv=>auth-allowed
-*                                             ELSE if_abap_behv=>auth-unauthorized )
-*                         IN
-*                         %tky = ls_responsable-%tky
-*                         %update = upd_auth
-*                         %action-Edit = upd_auth
-*                         %delete = del_auth ) TO result.
-*  ENDLOOP.
-
 
   ENDMETHOD.
 
   METHOD get_global_authorizations.
+
 **
-**    DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
-**    DATA(lv_administrador) = 'CB9980007185'.
-**
-**
+    "DATA(lv_technical_name) = 'CB9980007100'.
+    "DATA(lv_administrador) = 'CB9980007185'.
+    DATA(lv_administrador) = 'CB0000000000'.
+
+    gv_is_admin = abap_false.
+
+    IF lv_administrador = cl_abap_context_info=>get_user_technical_name( ).
+      gv_is_admin = abap_true.
+    ENDIF.
+
+
 **    "update  Solo el usuario asignado o un administrador pueden cambiar el estado de un incidente.
-**
-**    SELECT FROM zdt_inct_h_0631
-**         FIELDS new_status,
-**                responsable,
-**                his_uuid,
-**                inc_uuid,
-**                his_id
-**         WHERE RESPONSABLE is not null
-**       INTO TABLE @DATA(lt_resp_validate).
-**
-**    LOOP AT lt_resp_validate ASSIGNING FIELD-SYMBOL(<lf_responsable>).
-**
-**      IF <lf_responsable>-responsable eq lv_technical_name or
-**         <lf_responsable>-responsable eq lv_administrador.
-**
-**        IF requested_authorizations-%update EQ if_abap_behv=>mk-on OR
-**           requested_authorizations-%action-Edit EQ if_abap_behv=>mk-on.
-**
-**          IF <lf_responsable>-responsable EQ lv_technical_name OR lv_technical_name EQ lv_administrador.
-**            result-%update = if_abap_behv=>auth-allowed.
-**            result-%action-Edit = if_abap_behv=>auth-allowed.
-**          ELSE.
-**            result-%update = if_abap_behv=>auth-unauthorized.
-**            result-%action-Edit = if_abap_behv=>auth-unauthorized.
-**          ENDIF.
-**        ENDIF.
-**      ENDIF.
+
+
+*
+*     if requested_authorizations-%update eq if_abap_behv=>mk-on or
+*         requested_authorizations-%action-Edit eq if_abap_behv=>mk-on.
+*
+*       if lv_technical_name eq lv_administrador.
+*            result-%update = if_abap_behv=>auth-allowed.
+*            result-%action-Edit = if_abap_behv=>auth-allowed.
+*
+*          else.
+*
+*            result-%update = if_abap_behv=>auth-unauthorized.
+*            result-%action-Edit = if_abap_behv=>auth-unauthorized.
+*
+*      ENDIF.
+*      ENDIF.
 
 *
 *      IF <lf_responsable>-new_status EQ lc_status-in_progress.
@@ -298,6 +213,11 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
   METHOD ChangeStatus.
 
+*    "DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
+    DATA(lv_technical_name) = 'CB9980007100'.
+*    "DATA(lv_administrador) = 'CB9980007185'.
+*    DATA(lv_administrador) = 'CB0000000000'.
+
     DATA : lt_update_incident TYPE TABLE FOR UPDATE Z_r_DT_INCT_0631,
            lt_create_history  TYPE TABLE FOR CREATE Z_r_DT_INCT_0631\_History,
            ls_history         TYPE zdt_inct_h_0631.
@@ -315,7 +235,7 @@ CLASS lhc_Incidents IMPLEMENTATION.
       DATA(lv_text)       = keys[ KEY id %tky = <lf_incidents>-%tky ]-%param-text.
 
 
-      " Validaciones de estado
+      " Validaciones de estado VER SI ESTO SE TIENE QUE MOVER
 
       IF <lf_incidents>-Status EQ 'CN' OR lv_status = 'CO' AND lv_status = 'CL'.
 
@@ -349,13 +269,16 @@ CLASS lhc_Incidents IMPLEMENTATION.
         APPEND VALUE #( %tky = <lf_incidents>-%tky
                         status = lv_new_status
                         ChangedDate = cl_abap_context_info=>get_system_date( )
+                        Responsable = cl_abap_context_info=>get_user_technical_name( )
                         ) TO lt_update_incident.
-        DATA(lv_responsable) = cl_abap_context_info=>get_user_technical_name( ).
+
       ELSE.
-        " Actualiza entidad
+
         APPEND VALUE #( %tky = <lf_incidents>-%tky
                         status = lv_new_status
-                        ChangedDate = cl_abap_context_info=>get_system_date( )  ) TO lt_update_incident.
+                        ChangedDate = cl_abap_context_info=>get_system_date( )
+                        Responsable = <lf_incidents>-Responsable
+                         ) TO lt_update_incident.
 
       ENDIF.
 
@@ -391,7 +314,6 @@ CLASS lhc_Incidents IMPLEMENTATION.
                                               previousstatus  = ls_history-previous_status
                                               newstatus       = ls_history-new_status
                                               text            = ls_history-text
-                                              responsable = lv_responsable
                                               ) ) ) TO lt_create_history .
       ENDIF.
     ENDLOOP.
@@ -403,7 +325,8 @@ CLASS lhc_Incidents IMPLEMENTATION.
     MODIFY ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
     ENTITY Incidents
     UPDATE  FIELDS ( ChangedDate
-                     Status )
+                     Status
+                     Responsable )
     WITH lt_update_incident.
 
     FREE incidents.
@@ -416,7 +339,6 @@ CLASS lhc_Incidents IMPLEMENTATION.
                                   PreviousStatus
                                   NewStatus
                                   Text
-                                  Responsable
                                   )
         AUTO FILL CID
         WITH lt_create_history
@@ -434,65 +356,6 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
     result = VALUE #( FOR incident IN incidents ( %tky = incident-%tky
                                                   %param = incident ) ).
-
-  ENDMETHOD.
-
-  METHOD sethistory.
-
-*    DATA : lt_update_incident TYPE TABLE FOR UPDATE Z_r_DT_INCT_0631,
-*           lt_create_history  TYPE TABLE FOR CREATE Z_r_DT_INCT_0631\_History,
-*           ls_history         TYPE zdt_inct_h_0631.
-*
-*    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-*    ENTITY Incidents
-*    ALL FIELDS
-*    WITH CORRESPONDING #( keys )
-*    RESULT DATA(incidents).
-*
-*    LOOP AT incidents ASSIGNING FIELD-SYMBOL(<lf_incidents>).
-*
-*      DATA(lv_max_his_id) = get_history_index( IMPORTING ev_incuuid = <lf_incidents>-IncUUID ).
-*
-*      IF lv_max_his_id IS INITIAL.
-*        ls_history-his_id = 1.
-*      ELSE.
-*        ls_history-his_id = lv_max_his_id + 1.
-*      ENDIF.
-*
-*      TRY.
-*          ls_history-inc_uuid = cl_system_uuid=>create_uuid_x16_static( ).
-*        CATCH cx_uuid_error INTO DATA(lo_error).
-*          DATA(lv_exception) = lo_error->get_text(  ).
-*      ENDTRY.
-*
-*      IF ls_history-his_id IS NOT INITIAL.
-*
-*        APPEND VALUE #( %tky    = <lf_incidents>-%tky
-*                        %target = VALUE #( (  HisUUID         = ls_history-his_uuid
-*                                              IncUUID         = ls_history-inc_uuid
-*                                              hisid           = ls_history-his_id
-*                                              previousstatus  = ls_history-previous_status
-*                                              newstatus       = ls_history-new_status
-*                                              text            = 'First Incident' ) ) ) TO lt_create_history .
-*      ENDIF.
-*    ENDLOOP.
-*
-*    UNASSIGN <lf_incidents>.
-*    FREE incidents.
-*
-*    MODIFY ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
-*    ENTITY Incidents
-*    CREATE BY \_History FIELDS ( HisUUID
-*                                 IncUUID
-*                                 HisID
-*                                 PreviousStatus
-*                                 NewStatus
-*                                 Text )
-*       AUTO FILL CID
-*       WITH lt_create_history
-*    MAPPED mapped
-*    FAILED failed
-*    REPORTED reported.
 
   ENDMETHOD.
 

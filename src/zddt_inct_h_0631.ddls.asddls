@@ -19,7 +19,6 @@ define view entity ZDDT_INCT_H_0631
       previous_status       as PreviousStatus,
       new_status            as NewStatus,
       text                  as Text,
-      responsable           as Responsable,
       local_created_by      as LocalCreatedBy,
       local_created_at      as LocalCreatedAt,
       local_last_changed_by as LocalLastChangedBy,

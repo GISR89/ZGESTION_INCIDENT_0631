@@ -22,7 +22,7 @@ annotate entity ZC_DT_INCT_0631 with
                  label: 'History',
                  position: 20,
                  targetElement: '_History' }]
-                
+
 
   @UI: { lineItem:   [{ position : 10,
                         importance: #HIGH,
@@ -49,7 +49,7 @@ annotate entity ZC_DT_INCT_0631 with
   @UI: { lineItem: [{ position : 30,
                    importance : #LOW  }],
          identification: [{ position: 30  }]}
-         //selectionField: [{ position: 30 }] }
+  //selectionField: [{ position: 30 }] }
   //@UI.hidden: true
   Title;
 
@@ -59,7 +59,7 @@ annotate entity ZC_DT_INCT_0631 with
         selectionField: [{ position: 40 }] }
   Description;
 
-  @Consumption.valueHelpDefinition: [{ entity : { name    : 'ZDD_STATUS_VH_0631',                 
+  @Consumption.valueHelpDefinition: [{ entity : { name    : 'ZDD_STATUS_VH_0631',
                                                   element : 'StatusCode'} }]
   @UI: { lineItem: [{ position : 50,
                    importance : #LOW  }],
@@ -67,7 +67,7 @@ annotate entity ZC_DT_INCT_0631 with
          selectionField: [{ position: 50 }] }
   Status;
 
-  @Consumption.valueHelpDefinition: [{ entity : { name    : 'ZDD_PRIORITY_VH_631',                 
+  @Consumption.valueHelpDefinition: [{ entity : { name    : 'ZDD_PRIORITY_VH_631',
                                                   element : 'PriorityCode'} }]
   @UI: { lineItem: [{ position : 60,
                    importance : #LOW  }],
@@ -86,7 +86,16 @@ annotate entity ZC_DT_INCT_0631 with
          identification: [{ position: 80  }],
          selectionField: [{ position: 80 }] }
   ChangedDate;
-  
+
+  @UI: { lineItem: [{ label : 'Responsable',
+                    position  : 81,
+                    importance : #LOW  }],
+    identification: [{ label : 'Responsable',
+                       position: 81  }] }
+    //selectionField: [{ position: 81 }] }
+
+  Responsable;
+
   @UI: { lineItem: [{ position : 90,
                    importance : #LOW  }],
          identification: [{ position: 90  }],
