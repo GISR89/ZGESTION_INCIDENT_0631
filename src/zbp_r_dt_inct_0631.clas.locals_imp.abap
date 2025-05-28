@@ -12,6 +12,7 @@ CLASS lhc_Incidents DEFINITION INHERITING FROM cl_abap_behavior_handler.
                END OF lc_status.
 
     CLASS-DATA gv_is_admin TYPE abap_boolean.
+    CLASS-DATA lv_technical_name TYPE string.
 
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR Incidents RESULT result.
@@ -30,6 +31,8 @@ CLASS lhc_Incidents DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS setStatusToOpen FOR DETERMINE ON SAVE
       IMPORTING keys FOR Incidents~setStatusToOpen.
+    METHODS validateFields FOR VALIDATE ON SAVE
+      IMPORTING keys FOR Incidents~validateFields.
 
     METHODS get_history_index EXPORTING ev_incuuid      TYPE sysuuid_x16
                               RETURNING VALUE(rv_index) TYPE zde_his_id_0631.
@@ -41,10 +44,13 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
   METHOD get_instance_features.
 
-    DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
-    "DATA(lv_technical_name) = 'CB9980007100'.
 
+********************************************************************************************************************************************
 
+    lv_technical_name = cl_abap_context_info=>get_user_technical_name( ).
+    "lv_technical_name = 'CB9980007100'.
+
+********************************************************************************************************************************************
 
     READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
      ENTITY Incidents
@@ -53,9 +59,7 @@ CLASS lhc_Incidents IMPLEMENTATION.
      RESULT DATA(incidents)
      FAILED failed.
 
-****************************************************************************************************************************
-
-      DATA lv_history_index TYPE zde_his_id_0631.
+    DATA lv_history_index TYPE zde_his_id_0631.
     DATA(lv_create_action) = lines( incidents ).
     IF lv_create_action EQ 1.
       lv_history_index = get_history_index( IMPORTING ev_incuuid = incidents[ 1 ]-IncUUID ).
@@ -68,60 +72,30 @@ CLASS lhc_Incidents IMPLEMENTATION.
                             %action-ChangeStatus   = COND #( WHEN incident-Status = lc_status-completed OR
                                                                   incident-Status = lc_status-closed    OR
                                                                   incident-Status = lc_status-canceled  OR
-                                                                  lv_history_index = 0  and
-                                                                  incident-Responsable ne lv_technical_name and
-                                                                  incident-Responsable ne '' and
-                                                                  gv_is_admin ne abap_true
+                                                                  lv_history_index = 0
                                                              THEN if_abap_behv=>fc-o-disabled
                                                              ELSE if_abap_behv=>fc-o-enabled )
 
-                            %assoc-_History       = COND #( WHEN incident-Status = lc_status-completed OR
-                                                                 incident-Status = lc_status-closed    OR
-                                                                 incident-Status = lc_status-canceled  OR
-                                                                 lv_history_index = 0 and
-                                                                 incident-Responsable ne lv_technical_name OR
-                                                                 incident-Responsable ne '' OR
-                                                                 gv_is_admin ne abap_true
-                                                            THEN if_abap_behv=>fc-o-disabled
-                                                            ELSE if_abap_behv=>fc-o-enabled ) ) ).
+                             %assoc-_History       = COND #( WHEN incident-Status = lc_status-completed OR
+                                                                  incident-Status = lc_status-closed    OR
+                                                                  incident-Status = lc_status-canceled  OR
+                                                                  lv_history_index = 0
+                                                             THEN if_abap_behv=>fc-o-disabled
+                                                             ELSE if_abap_behv=>fc-o-enabled ) ) ).
 
-
-
-***************************************************************************************************************************************
-
-
-
-    "Para un incidente con estatus Canceled (CN), Completed (CO) o Closed (CL), ya no es posible cambiar el estatus. Deshabilita boton
-*    DATA lv_history_index TYPE zde_his_id_0631.
-*    DATA(lv_create_action) = lines( incidents ).
-*    IF lv_create_action EQ 1.
-*      lv_history_index = get_history_index( IMPORTING ev_incuuid = incidents[ 1 ]-IncUUID ).
-*    ELSE.
-*      lv_history_index = 1.
-*    ENDIF.
-*
-*    result = VALUE #( FOR incident IN incidents
-*                          ( %tky                   = incident-%tky
-*                            %action-ChangeStatus   = COND #( WHEN incident-Status = lc_status-completed OR
-*                                                                  incident-Status = lc_status-closed    OR
-*                                                                  incident-Status = lc_status-canceled  OR
-*                                                                  lv_history_index = 0
-*                                                             THEN if_abap_behv=>fc-o-disabled
-*                                                             ELSE if_abap_behv=>fc-o-enabled )
-*
-*                            %assoc-_History       = COND #( WHEN incident-Status = lc_status-completed OR
-*                                                                 incident-Status = lc_status-closed    OR
-*                                                                 incident-Status = lc_status-canceled  OR
-*                                                                 lv_history_index = 0
-*                                                            THEN if_abap_behv=>fc-o-disabled
-*                                                            ELSE if_abap_behv=>fc-o-enabled ) ) ).
 
   ENDMETHOD.
 
   METHOD get_instance_authorizations.
 
-    DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
-    "DATA(lv_technical_name) = 'CB9980007100'.
+
+********************************************************************************************************************************************
+    lv_technical_name = cl_abap_context_info=>get_user_technical_name( ).
+    "lv_technical_name = 'CB9980007100'.
+
+********************************************************************************************************************************************
+
+
 
     "update  Solo el usuario asignado o un administrador pueden cambiar el estado de un incidente.
 
@@ -166,12 +140,13 @@ CLASS lhc_Incidents IMPLEMENTATION.
       EXIT.
     ENDLOOP.
 
+
   ENDMETHOD.
 
   METHOD get_global_authorizations.
 
     "Logica para realizar pruebas con otro administrador.
-    "DATA(lv_technical_name) = 'CB9980007100'.
+
     "DATA(lv_administrador) = 'CB9980007185'.
     DATA(lv_administrador) = 'CB0000000000'.
 
@@ -180,6 +155,7 @@ CLASS lhc_Incidents IMPLEMENTATION.
     IF lv_administrador = cl_abap_context_info=>get_user_technical_name( ).
       gv_is_admin = abap_true.
     ENDIF.
+
 
   ENDMETHOD.
 
@@ -196,8 +172,15 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
   METHOD ChangeStatus.
 
-*    "DATA(lv_technical_name) = cl_abap_context_info=>get_user_technical_name( ).
-    DATA(lv_technical_name) = 'CB9980007100'.
+
+********************************************************************************************************************************************
+    lv_technical_name = cl_abap_context_info=>get_user_technical_name( ).
+    "lv_technical_name = 'CB9980007100'.
+
+********************************************************************************************************************************************
+
+
+
     DATA : lt_update_incident TYPE TABLE FOR UPDATE Z_r_DT_INCT_0631,
            lt_create_history  TYPE TABLE FOR CREATE Z_r_DT_INCT_0631\_History,
            ls_history         TYPE zdt_inct_h_0631.
@@ -261,7 +244,6 @@ CLASS lhc_Incidents IMPLEMENTATION.
                          ) TO lt_update_incident.
 
       ENDIF.
-
 
       " Asignar valor a his_id
       DATA(lv_max_his_id) = get_history_index(
@@ -442,5 +424,30 @@ CLASS lhc_Incidents IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD validateFields.
+
+    READ ENTITIES OF Z_r_DT_INCT_0631 IN LOCAL MODE
+    ENTITY incidents
+    ALL FIELDS
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_incidents).
+
+    LOOP AT lt_incidents ASSIGNING FIELD-SYMBOL(<lf_incidents>).
+
+      IF <lf_incidents>-Title IS INITIAL OR
+         <lf_incidents>-Priority IS INITIAL OR
+         <lf_incidents>-Description IS INITIAL.
+
+      APPEND VALUE #( %tky = <lf_incidents>-%tky ) to failed-incidents.
+
+      APPEND VALUE #( %tky = <lf_incidents>-%tky
+                      %msg = new zcl_incident_messages_0631( textid = zcl_incident_messages_0631=>validate_fields
+                                                              severity = if_abap_behv_message=>severity-error ) ) TO reported-incidents.
+
+      ENDIF.
+
+    ENDLOOP.
+
+  ENDMETHOD.
 
 ENDCLASS.

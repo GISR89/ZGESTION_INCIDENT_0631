@@ -67,14 +67,14 @@ CLASS zcl_incident_messages_0631 DEFINITION
         attr4 TYPE scx_attrname VALUE '',
       END OF change_date,
 
-      BEGIN OF begin_date_on_bef_sysdate,
+      BEGIN OF validate_Fields,
         msgid TYPE symsgid VALUE 'ZMC_INCT_MESSAGE_631',
         msgno TYPE symsgno VALUE '007',
-        attr1 TYPE scx_attrname VALUE 'MV_CREATION_DATE',
+        attr1 TYPE scx_attrname VALUE '',
         attr2 TYPE scx_attrname VALUE '',
         attr3 TYPE scx_attrname VALUE '',
         attr4 TYPE scx_attrname VALUE '',
-      END OF begin_date_on_bef_sysdate,
+      END OF validate_Fields,
 
       BEGIN OF incident_responsible,
         msgid TYPE symsgid VALUE 'ZMC_INCT_MESSAGE_631',

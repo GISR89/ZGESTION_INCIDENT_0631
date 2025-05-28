@@ -48,7 +48,7 @@
      <SPRSL>E</SPRSL>
      <ARBGB>ZMC_INCT_MESSAGE_631</ARBGB>
      <MSGNR>007</MSGNR>
-     <TEXT>No se permite fecha futura</TEXT>
+     <TEXT>Los campos TITLE, PRIORITY o DESCRIPTION no pueden estar vacios</TEXT>
     </T100>
     <T100>
      <SPRSL>E</SPRSL>

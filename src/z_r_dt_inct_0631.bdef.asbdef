@@ -40,6 +40,8 @@ authorization master ( global, instance )
 
   //internal action setHistory;
 
+  validation validateFields on save { create; field Title, Description, Priority; }
+
   determination setStatusToOpen on save {create; }
   determination SetIncidentNumber on modify {create; }
 
